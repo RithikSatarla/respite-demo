@@ -136,7 +136,7 @@ footer{border-top:1px solid var(--rule);padding-block:28px;font-size:15px;color:
 <section class="wrap" id="proof" aria-labelledby="pf-h">
   <p class="label">It looks fine on video, and it isn't</p>
   <h2 id="pf-h">Same image, logged as new</h2>
-  <p class="lead">Three rows in a row from Station B's wrist camera: three timestamps, one camera frame, one image hash. The video plays smoothly, and half its frames are repeats. Station A's camera gives a new image on every row.</p>
+  <p class="lead">Three rows in a row from Station B's wrist camera: three timestamps, one camera frame, one image hash. The video plays smoothly, but the camera gives about 5 new frames a second while the recorder logs about 10 rows, so roughly every other row repeats an old image. In the three Station A rows below, the camera gives a new image each time.</p>
   <h3>Station B, wrist camera</h3><div class="row3 same" id="brow"></div>
   <h3>Station A, overhead camera</h3><div class="row3 diff" id="arow"></div>
 </section>
@@ -172,6 +172,7 @@ footer{border-top:1px solid var(--rule);padding-block:28px;font-size:15px;color:
 <section class="wrap" id="run" aria-labelledby="rn-h">
   <p class="label">Run it</p>
   <h2 id="rn-h">On the vendor's own computer</h2>
+  <p class="lead">The code is shared with pilot vendors. Once you have access:</p>
   <div class="cmds">
     <div class="cmd"><p>Install</p><pre>git clone https://github.com/RithikSatarla/respitelabs.git
 cd respitelabs
@@ -211,7 +212,7 @@ Episode by episode, exactly as listed in decisions.json:
   const pct = v => v == null ? "-" : Math.round(v * 100) + "%";
   const say = s => {
     const m = /camera giving ([\d.]+) new frames a second, should be ([\d.]+)\./.exec(s.sentence || "");
-    if (m && +m[1] / +m[2] > 0.4 && +m[1] / +m[2] < 0.6) return s.sentence.replace(m[0], `camera giving ${m[1]} new frames a second, half the recorder's ${m[2]} rows a second.`);
+    if (m && +m[1] / +m[2] > 0.4 && +m[1] / +m[2] < 0.6) return s.sentence.replace(m[0], `camera giving ${m[1]} new frames a second, half the recorder's ${fmt(s.rows_s, 1)} rows a second.`);
     return s.sentence;
   };
   let i = 0, timer = null, cur = null, alerts = [];
