@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Respite: catch the broken recording setup before its data ships</title>
+<meta name="description" content="Respite runs on a robot data vendor's computer, finds the setup causing bad data, and repairs what it can.">
+<link rel="canonical" href="https://demo.respitelabs.net/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%23121212%27/%3E%3Crect x=%274%27 y=%274%27 width=%278%27 height=%278%27 fill=%27%23FFC400%27/%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#F7F7F4; --ink:#121212; --soft:#4E4F54; --faint:#6E6F74; --rule:#DEDED8; --panel:#EFEFEA;
+  --signal:#FFC400;
+  --sans:"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono:ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:18px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--signal);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:24px}
+@media (max-width:520px){.wrap{padding-inline:16px}}
+header{border-bottom:1px solid var(--rule)}
+.nav{display:flex;align-items:center;height:60px}
+.logo{font-weight:800;letter-spacing:.06em;text-decoration:none;font-size:16px}
+.nav a.btn{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;text-decoration:none;padding:11px 18px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;min-height:44px}
+.btn:hover{background:var(--signal);border-color:var(--signal);color:var(--ink)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.hero{padding-block:64px 24px}
+h1{font-size:clamp(34px,6vw,64px);line-height:1.04;font-weight:800;margin:0;max-width:18ch;letter-spacing:-.015em}
+.sub{font-size:clamp(18px,2.2vw,22px);color:var(--soft);max-width:46ch;margin:18px 0 0}
+section{padding-block:56px}
+section+section{border-top:1px solid var(--rule)}
+.label{font-family:var(--mono);font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:0 0 10px}
+h2{font-size:clamp(26px,3.6vw,38px);line-height:1.12;margin:0 0 14px;letter-spacing:-.01em}
+.lead{color:var(--soft);max-width:64ch;margin:0 0 24px}
+.note{font-size:16px;color:var(--soft);margin-top:16px;max-width:66ch}
+code{font-family:var(--mono);font-size:.88em;background:var(--panel);padding:1px 5px;border:1px solid var(--rule)}
+/* replay */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 16px}
+.controls select{font-family:var(--mono);font-size:15px;padding:10px;border:2px solid var(--ink);background:var(--paper);min-height:44px}
+.term{background:#1e1e2e;color:#cdd6f4;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.16);padding:18px 20px;font-family:var(--mono);font-size:15px}
+.term .bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;color:#a6adc8}
+.term .bar b{color:#fff;font-weight:600}
+.prompt{margin:0 0 12px;color:#f9e2af}
+.prompt.gone{display:none}
+.st{border:1px solid #45475a;border-radius:10px;padding:14px;transition:border-color .3s}
+.st.WARN{border-color:#f9e2af}.st.STOP{border-color:#f38ba8}
+.st .top{display:flex;align-items:center;gap:12px}
+.st .name{font-weight:600;color:#fff}
+.pill{font-weight:700;font-size:13px;padding:3px 11px;border-radius:999px;letter-spacing:.05em}
+.pill.OK{background:#a6e3a1;color:#14301a}.pill.WARN{background:#f9e2af;color:#3d2c00}.pill.STOP{background:#f38ba8;color:#3d0d14}
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 14px;margin-top:12px}
+.nums div{display:flex;flex-direction:column}
+.nums span{color:#9399b2;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.nums b{color:#fff;font-weight:500;font-size:16px}
+@media (min-width:760px){.nums{grid-template-columns:repeat(7,minmax(0,1fr))}}
+.sent{margin-top:12px;color:#bac2de;font-size:14px;line-height:1.5}
+.alerts{margin-top:14px;border-top:1px dashed #45475a;padding-top:10px;font-size:14px}
+.alerts p{margin:0 0 4px;color:#a6adc8}
+.alerts ul{margin:0;padding:0;list-style:none}
+/* cards */
+.cards{display:grid;gap:16px}
+@media (min-width:860px){.cards{grid-template-columns:repeat(3,1fr)}}
+.card{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:22px}
+.card p{margin:0 0 12px;font-size:19px;line-height:1.4}
+.card a{font-size:15px;color:var(--soft)}
+/* proof */
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.row3{gap:6px}}
+figure{margin:0;background:#fff;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#ddd}
+figcaption{padding:10px 12px;font-family:var(--mono);font-size:14px;line-height:1.5}
+@media (max-width:640px){figcaption{font-size:11px;padding:6px}}
+.hash{display:inline-block;margin-top:4px;padding:1px 6px;border-radius:6px;word-break:break-all}
+.same .hash{background:#ffe08a}.diff .hash{background:#c8efd0}
+h3{margin:28px 0 10px;font-size:20px}
+.plot{border-radius:12px;overflow:hidden;border:1px solid var(--rule);background:#121212}
+.plot img{display:block;width:100%;height:auto}
+.big{font-size:clamp(22px,2.8vw,30px);line-height:1.3;max-width:34ch;margin:0}
+/* table, code */
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);border-radius:10px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:16px;min-width:520px}
+th,td{padding:11px 12px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:600}
+td.hl{background:#fff3c4;font-weight:700}
+pre{background:#1e1e2e;color:#cdd6f4;border-radius:10px;padding:16px;font-family:var(--mono);font-size:14px;line-height:1.55;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.cmds{display:grid;gap:12px}
+.cmd{position:relative}
+.cmd p{margin:0 0 6px;color:var(--soft);font-size:16px}
+.copy{position:absolute;right:8px;bottom:8px;font-family:var(--mono);font-size:12px;font-weight:600;text-transform:uppercase;padding:6px 10px;min-height:32px;border:1px solid #585b70;background:#313244;color:#cdd6f4;border-radius:6px;cursor:pointer}
+.cmd pre{padding-right:84px}
+.close{padding-block:72px}
+footer{border-top:1px solid var(--rule);padding-block:28px;font-size:15px;color:var(--soft)}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="logo" href="https://respitelabs.net/">RESPITE</a><a class="btn" href="https://respitelabs.net/#contact">Contact</a></div></header>
+<main>
+<div class="wrap hero">
+  <h1>Catch the broken recording setup before its data ships.</h1>
+  <p class="sub">Respite runs on a robot data vendor's computer, finds the setup causing bad data, and repairs what it can.</p>
+</div>
+
+<section class="wrap" id="replay" aria-labelledby="rp-h" style="border-top:0;padding-top:24px">
+  <h2 id="rp-h" class="label" style="font-size:13px;letter-spacing:.08em;margin:0 0 6px">Live replay of a real batch</h2>
+  <p class="lead" style="margin-bottom:8px">One recording station of a robotics team's batch, checked episode by episode by <code>respite live</code>, replayed in recording order.</p>
+  <div class="controls">
+    <button class="btn" id="play" type="button">Play</button>
+    <button class="btn ghost" id="restart" type="button">Restart</button>
+    <label for="speed" class="label" style="margin:0">Speed</label>
+    <select id="speed"><option value="1">1x</option><option value="2" selected>2x</option><option value="4">4x</option><option value="8">8x</option></select>
+  </div>
+  <div class="term" role="region" aria-live="polite" aria-label="Station status">
+    <div class="bar"><b>respite live</b><span id="count">1 episode checked</span></div>
+    <p class="prompt" id="prompt">Press Play to watch Respite check this batch</p>
+    <div id="stations"></div>
+    <div class="alerts"><p>Last alerts</p><ul id="alerts"></ul></div>
+  </div>
+  <p class="note">Station B goes from OK straight to STOP at its 7th episode, 11.3 minutes into its recording.</p>
+</section>
+
+<section class="wrap" id="why" aria-labelledby="wy-h">
+  <p class="label">Why this matters</p>
+  <h2 id="wy-h">Bad data is expensive, and it is found late</h2>
+  <div class="cards">
+    <div class="card"><p>Robot data is sold by the hour. A broken setup ruins every hour it records.</p></div>
+    <div class="card"><p>One vendor tells buyers to expect 20 to 40% of recordings thrown out.</p><a href="https://claru.ai/blog/training-data-for-robotics-pipeline">Source: a robot data vendor's guide</a></div>
+    <div class="card"><p>Physical Intelligence is hiring an engineer just for data quality.</p><a href="https://jobs.ashbyhq.com/physicalintelligence/c01b0e18-5eb8-4255-a10a-7e9a171676b7">Source: the job post</a></div>
+  </div>
+</section>
+
+<section class="wrap" id="proof" aria-labelledby="pf-h">
+  <p class="label">It looks fine on video, and it isn't</p>
+  <h2 id="pf-h">Same image, logged as new</h2>
+  <p class="lead">Three rows in a row from Station B's wrist camera: three timestamps, one camera frame, one image hash. The video plays smoothly, and half its frames are repeats. Station A's camera gives a new image on every row.</p>
+  <h3>Station B, wrist camera</h3><div class="row3 same" id="brow"></div>
+  <h3>Station A, overhead camera</h3><div class="row3 diff" id="arow"></div>
+</section>
+
+<section class="wrap" id="clock" aria-labelledby="ck-h">
+  <p class="label">A different setup, a different problem</p>
+  <h2 id="ck-h">Station A: a slow recorder</h2>
+  <p class="lead">One Station A episode, row by row. The playback clock says 154 seconds. The recorder's own clock says 306. Training sees the first one.</p>
+  <div class="plot"><img src="img/clock.png" alt="Plot of one Station A episode: the playback clock reaches 154 seconds while the recorder's own clock reaches 306 seconds over the same rows" width="1600" height="900" loading="lazy"></div>
+  <p class="note">Playback hid 255 minutes across Station A.</p>
+</section>
+
+<section class="wrap" id="miss" aria-labelledby="ms-h">
+  <p class="label">Most checks miss this</p>
+  <h2 id="ms-h" class="big">Most tools check each part of a recording on its own: is the video frozen, is data missing. The costliest problems pass those checks: a camera that never freezes but only gives half its frames. Respite checks whether the parts agree, and finds the setup causing it.</h2>
+</section>
+
+<section class="wrap" id="public" aria-labelledby="pb-h">
+  <p class="label">It's not just one team</p>
+  <h2 id="pb-h" class="big">We checked public datasets from 9 companies. 7 had problems that can't be normal.</h2>
+</section>
+
+<section class="wrap" id="vendor" aria-labelledby="vd-h">
+  <p class="label">What the vendor gets</p>
+  <h2 id="vd-h">A fixed copy, and a script that makes it</h2>
+  <p class="lead">The same checks, before and after <code>respite fix</code>. The fix writes the recorder's real elapsed time into a new column and leaves the original timestamps alone, so the data still loads.</p>
+  <div class="tbl"><table id="ba"></table></div>
+  <p class="note">Station B's camera has to be fixed at the station. Respite marks every stale row so training can skip them, and flags the camera before more hours are recorded.</p>
+  <p class="label" style="margin-top:28px">The cleanup script, first lines</p>
+  <pre id="script"></pre>
+</section>
+
+<section class="wrap" id="run" aria-labelledby="rn-h">
+  <p class="label">Run it</p>
+  <h2 id="rn-h">On the vendor's own computer</h2>
+  <div class="cmds">
+    <div class="cmd"><p>Install</p><pre>git clone https://github.com/RithikSatarla/respitelabs.git
+cd respitelabs
+pip install -e ".[readers]"</pre><button class="copy" type="button">Copy</button></div>
+    <div class="cmd"><p>Watch a recording folder, one status per station</p><pre>respite live path/to/recording</pre><button class="copy" type="button">Copy</button></div>
+    <div class="cmd"><p>A fixed copy, with every change logged and a standalone script</p><pre>respite fix path/to/batch --out path/to/batch_fixed</pre><button class="copy" type="button">Copy</button></div>
+    <div class="cmd"><p>Check whether the parts of each recording agree</p><pre>respite agree path/to/batch</pre><button class="copy" type="button">Copy</button></div>
+  </div>
+</section>
+
+<section class="wrap close" aria-labelledby="cl-h">
+  <h2 id="cl-h" class="big" style="font-weight:800">For robot data vendors. Starting paid pilots now.</h2>
+  <p style="margin-top:22px"><a class="btn" href="https://respitelabs.net/#contact">Talk to us</a></p>
+</section>
+</main>
+<footer><div class="wrap"><a href="https://respitelabs.net/">respitelabs.net</a></div></footer>
+
+<script id="d-replay" type="application/json">{"steps":[{"station":"Station B","episodes":1,"minutes":3.6,"status":"OK","sentence":"10.0 new frames a second for 9.8 rows a second; 0% stale rows; delay 220 ms.","new_fps":10.003,"rows_s":9.761,"stale":0.0,"slow":"0/1","delay":220.5,"from_start":true},{"station":"Station B","episodes":2,"minutes":4.1,"status":"OK","sentence":"10.0 new frames a second for 9.8 rows a second; 0% stale rows; delay 218 ms.","new_fps":10.02,"rows_s":9.838,"stale":0.002,"slow":"0/2","delay":218.0,"from_start":true},{"station":"Station B","episodes":3,"minutes":6.9,"status":"OK","sentence":"10.0 new frames a second for 9.8 rows a second; 0% stale rows; delay 216 ms.","new_fps":10.003,"rows_s":9.762,"stale":0.001,"slow":"0/3","delay":215.5,"from_start":true},{"station":"Station B","episodes":4,"minutes":7.5,"status":"OK","sentence":"10.0 new frames a second for 9.8 rows a second; 0% stale rows; delay 216 ms.","new_fps":10.012,"rows_s":9.807,"stale":0.002,"slow":"0/4","delay":216.0,"from_start":true},{"station":"Station B","episodes":5,"minutes":7.7,"status":"OK","sentence":"10.0 new frames a second for 9.8 rows a second; 0% stale rows; delay 216 ms.","new_fps":10.003,"rows_s":9.781,"stale":0.003,"slow":"0/5","delay":216.0,"from_start":true},{"station":"Station B","episodes":6,"minutes":11.1,"status":"OK","sentence":"10.0 new frames a second for 9.8 rows a second; 0% stale rows; delay 214 ms.","new_fps":10.003,"rows_s":9.781,"stale":0.004,"slow":"0/5","delay":214.25,"from_start":true},{"station":"Station B","episodes":7,"minutes":11.3,"status":"STOP","sentence":"camera giving 5.1 new frames a second, should be 9.7. 60% of rows stale. Check the camera before recording more.","new_fps":5.088,"rows_s":9.762,"stale":0.604,"slow":"0/5","delay":213.0,"from_start":true},{"station":"Station B","episodes":8,"minutes":15.2,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 61% of rows stale. Check the camera before recording more.","new_fps":5.065,"rows_s":9.751,"stale":0.604,"slow":"0/5","delay":178.0,"from_start":true},{"station":"Station B","episodes":9,"minutes":16.2,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 60% of rows stale. Check the camera before recording more.","new_fps":5.022,"rows_s":9.751,"stale":0.604,"slow":"0/5","delay":178.0,"from_start":true},{"station":"Station B","episodes":10,"minutes":21.2,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 60% of rows stale. Check the camera before recording more.","new_fps":5.011,"rows_s":9.749,"stale":0.604,"slow":"0/5","delay":187.75,"from_start":true},{"station":"Station B","episodes":11,"minutes":26.3,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 68% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.749,"stale":0.68,"slow":"0/5","delay":198.25,"from_start":true},{"station":"Station B","episodes":12,"minutes":26.6,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 69% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.751,"stale":0.686,"slow":"0/5","delay":199.0,"from_start":true},{"station":"Station B","episodes":13,"minutes":30.7,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 70% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.752,"stale":0.705,"slow":"0/5","delay":199.0,"from_start":true},{"station":"Station B","episodes":14,"minutes":31.1,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 71% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.752,"stale":0.711,"slow":"0/5","delay":199.0,"from_start":true},{"station":"Station B","episodes":15,"minutes":35.5,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 71% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.752,"stale":0.711,"slow":"0/5","delay":199.0,"from_start":true},{"station":"Station B","episodes":16,"minutes":38.0,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 71% of rows stale. Check the camera before recording more.","new_fps":5.012,"rows_s":9.756,"stale":0.711,"slow":"0/5","delay":215.5,"from_start":true},{"station":"Station B","episodes":17,"minutes":38.1,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 70% of rows stale. Check the camera before recording more.","new_fps":5.011,"rows_s":9.754,"stale":0.703,"slow":"0/5","delay":207.25,"from_start":true},{"station":"Station B","episodes":18,"minutes":43.1,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 69% of rows stale. Check the camera before recording more.","new_fps":5.011,"rows_s":9.756,"stale":0.686,"slow":"0/5","delay":214.0,"from_start":true},{"station":"Station B","episodes":19,"minutes":46.5,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 59% of rows stale. Check the camera before recording more.","new_fps":5.01,"rows_s":9.756,"stale":0.586,"slow":"0/5","delay":202.5,"from_start":true},{"station":"Station B","episodes":20,"minutes":49.6,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 59% of rows stale. Check the camera before recording more.","new_fps":5.01,"rows_s":9.756,"stale":0.586,"slow":"0/5","delay":213.25,"from_start":true},{"station":"Station B","episodes":21,"minutes":52.9,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 58% of rows stale. Check the camera before recording more.","new_fps":5.01,"rows_s":9.752,"stale":0.584,"slow":"0/5","delay":204.25,"from_start":true},{"station":"Station B","episodes":22,"minutes":54.9,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 67% of rows stale. Check the camera before recording more.","new_fps":5.01,"rows_s":9.756,"stale":0.671,"slow":"0/5","delay":202.5,"from_start":true},{"station":"Station B","episodes":23,"minutes":55.3,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 71% of rows stale. Check the camera before recording more.","new_fps":5.011,"rows_s":9.757,"stale":0.714,"slow":"0/5","delay":202.5,"from_start":true},{"station":"Station B","episodes":24,"minutes":61.5,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 71% of rows stale. Check the camera before recording more.","new_fps":5.011,"rows_s":9.749,"stale":0.714,"slow":"0/5","delay":202.5,"from_start":true},{"station":"Station B","episodes":25,"minutes":66.5,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 67% of rows stale. Check the camera before recording more.","new_fps":5.011,"rows_s":9.748,"stale":0.671,"slow":"0/5","delay":202.5,"from_start":true},{"station":"Station B","episodes":26,"minutes":66.9,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.8. 63% of rows stale. Check the camera before recording more.","new_fps":5.014,"rows_s":9.763,"stale":0.631,"slow":"0/5","delay":209.5,"from_start":true},{"station":"Station B","episodes":27,"minutes":71.9,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 63% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.748,"stale":0.63,"slow":"0/5","delay":209.5,"from_start":true},{"station":"Station B","episodes":28,"minutes":76.7,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 62% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.741,"stale":0.615,"slow":"0/5","delay":193.5,"from_start":true},{"station":"Station B","episodes":29,"minutes":81.7,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 62% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.747,"stale":0.615,"slow":"0/5","delay":198.0,"from_start":true},{"station":"Station B","episodes":30,"minutes":81.9,"status":"STOP","sentence":"camera giving 5.0 new frames a second, should be 9.7. 60% of rows stale. Check the camera before recording more.","new_fps":5.009,"rows_s":9.747,"stale":0.604,"slow":"0/5","delay":198.0,"from_start":true}]}</script>
+<script id="d-proof" type="application/json">{"station_b":{"camera":"left wrist camera","rows":[{"row":386,"t":38.622,"frame":830915,"sha256":"7be8491259b627e83b071bcdf1315958ec1ce0e9c06d291a0c431ac77d644556"},{"row":387,"t":38.724,"frame":830915,"sha256":"7be8491259b627e83b071bcdf1315958ec1ce0e9c06d291a0c431ac77d644556"},{"row":388,"t":38.828,"frame":830915,"sha256":"7be8491259b627e83b071bcdf1315958ec1ce0e9c06d291a0c431ac77d644556"}]},"station_a":{"camera":"overhead camera","rows":[{"row":100,"t":10.0,"frame":912809,"sha256":"fdc9d75852ec80182fc252e7089e6f15e57d6a79cded4872e25d786374956c0b"},{"row":101,"t":10.094,"frame":912810,"sha256":"5dbdf197588082e448cecc0ff66dfe82c8b0dfa15c18aa567523f6d0a990e882"},{"row":102,"t":10.205,"frame":912812,"sha256":"079f8f0e1b415822809cb902e488cb5c5d614b4e338f9242b9a5f3cc357a3400"}]}}</script>
+<script id="d-ba" type="application/json">{"head":["station","hidden minutes before","after","stale rows before","after","new frames/s before","after","delay before","after"],"rows":[["Station A","255","0","15%","13%","9.5","9.7","188","187"],["Station B","0","0","64%","64%","5.0","5.0","174","174"]]}</script>
+<script id="d-script" type="text/plain">#!/usr/bin/env python
+"""Apply the fix decisions of `respite fix` to a copy of the recording.
+
+    python apply_fix.py --src <your full copy> --decisions decisions.json --out <fixed copy>
+
+Episode by episode, exactly as listed in decisions.json:
+  - decision "drop": the episode is left out (its reason is in the file).
+  - decision "keep": the episode is copied.
+    ...
+</script>
+<script>
+(() => {
+  const J = id => JSON.parse(document.getElementById(id).textContent);
+  const steps = J("d-replay").steps, proof = J("d-proof"), ba = J("d-ba");
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const fmt = (v, d) => v == null ? "-" : Number(v).toFixed(d);
+  const pct = v => v == null ? "-" : Math.round(v * 100) + "%";
+  const say = s => {
+    const m = /camera giving ([\d.]+) new frames a second, should be ([\d.]+)\./.exec(s.sentence || "");
+    if (m && +m[1] / +m[2] > 0.4 && +m[1] / +m[2] < 0.6) return s.sentence.replace(m[0], `camera giving ${m[1]} new frames a second, half the recorder's ${m[2]} rows a second.`);
+    return s.sentence;
+  };
+  let i = 0, timer = null, cur = null, alerts = [];
+  const elS = document.getElementById("stations"), elA = document.getElementById("alerts"), elC = document.getElementById("count");
+  const playBtn = document.getElementById("play"), prompt = document.getElementById("prompt");
+  function draw() {
+    const s = cur;
+    elS.innerHTML = `<div class="st ${s.status}"><div class="top"><span class="name">${esc(s.station)}</span><span class="pill ${s.status}">${s.status}</span></div>
+      <div class="nums"><div><span>episodes</span><b>${s.episodes}</b></div><div><span>minutes</span><b>${fmt(s.minutes,1)}</b></div>
+      <div><span>new fps</span><b>${fmt(s.new_fps,1)}</b></div><div><span>rows/s</span><b>${fmt(s.rows_s,1)}</b></div>
+      <div><span>stale</span><b>${pct(s.stale)}</b></div><div><span>slow</span><b>${esc(s.slow)}</b></div><div><span>delay ms</span><b>${fmt(s.delay,0)}</b></div></div>
+      <div class="sent">${esc(say(s))}</div></div>`;
+    elA.innerHTML = alerts.slice(-3).reverse().map(a => `<li>${esc(a)}</li>`).join("") || "<li>none yet</li>";
+    elC.textContent = `${i} episode${i === 1 ? "" : "s"} checked`;
+  }
+  function step() {
+    if (i >= steps.length) { stop(); playBtn.textContent = "Replay"; return; }
+    const s = steps[i++];
+    if (cur && cur.status !== s.status) alerts.push(`${s.station}  ${cur.status} → ${s.status}  episode ${s.episodes}, ${s.minutes.toFixed(1)} min`);
+    cur = s; draw();
+  }
+  const speed = () => Number(document.getElementById("speed").value);
+  function play() { stop(); prompt.classList.add("gone"); timer = setInterval(step, 900 / speed()); playBtn.textContent = "Pause"; }
+  function stop() { if (timer) clearInterval(timer); timer = null; playBtn.textContent = "Play"; }
+  function reset() { stop(); i = 0; cur = null; alerts = []; step(); prompt.classList.remove("gone"); }
+  playBtn.onclick = () => { if (i >= steps.length) { reset(); play(); } else if (timer) stop(); else play(); };
+  document.getElementById("restart").onclick = () => { reset(); play(); };
+  document.getElementById("speed").onchange = () => { if (timer) play(); };
+  reset();
+
+  const fig = (rows, pre, st, w, h) => rows.map((r, k) => `<figure><img src="img/${pre}${k}.jpg" alt="${st} camera frame, row ${r.row}" width="${w}" height="${h}" loading="lazy">
+     <figcaption>row ${r.row}, t = ${r.t.toFixed(3)} s<br>camera frame ${r.frame}<br><span class="hash">sha256 ${r.sha256.slice(0, 12)}</span></figcaption></figure>`).join("");
+  document.getElementById("brow").innerHTML = fig(proof.station_b.rows, "b", "Station B", 640, 480);
+  document.getElementById("arow").innerHTML = fig(proof.station_a.rows, "a", "Station A", 640, 360);
+
+  document.getElementById("ba").innerHTML = `<tr>${ba.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr>` +
+    ba.rows.map(r => `<tr>${r.map((c, j) => `<td class="${r[0] === "Station A" && (j === 1 || j === 2) ? "hl" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("");
+  document.getElementById("script").textContent = document.getElementById("d-script").textContent;
+
+  document.querySelectorAll(".copy").forEach(b => b.onclick = async () => {
+    const t = b.parentElement.querySelector("pre").textContent;
+    try { await navigator.clipboard.writeText(t); b.textContent = "Copied"; } catch (e) { b.textContent = "Select and copy"; }
+    setTimeout(() => b.textContent = "Copy", 1600);
+  });
+})();
+</script>
+</body>
+</html>
