@@ -211,11 +211,7 @@ Episode by episode, exactly as listed in decisions.json:
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const fmt = (v, d) => v == null ? "-" : Number(v).toFixed(d);
   const pct = v => v == null ? "-" : Math.round(v * 100) + "%";
-  const say = s => {
-    const m = /camera giving ([\d.]+) new frames a second, should be ([\d.]+)\./.exec(s.sentence || "");
-    if (m && +m[1] / +m[2] > 0.4 && +m[1] / +m[2] < 0.6) return s.sentence.replace(m[0], `camera giving ${m[1]} new frames a second, half the recorder's ${fmt(s.rows_s, 1)} rows a second.`);
-    return s.sentence;
-  };
+  const say = s => s.sentence;   // the tool's own sentence, word for word, as in reports/live_replay.md
   let i = 0, timer = null, cur = null, alerts = [];
   const elS = document.getElementById("stations"), elA = document.getElementById("alerts"), elC = document.getElementById("count");
   const playBtn = document.getElementById("play"), prompt = document.getElementById("prompt");
