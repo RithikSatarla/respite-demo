@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Respite: catch the broken recording setup before its data ships</title>
-<meta name="description" content="Respite runs on a robot data vendor's computer, finds the setup causing bad data, and repairs what it can.">
+<title>Respite Labs — Historical robot recording replay</title>
+<meta name="description" content="Respite analyzes robot recordings and ties camera and timing problems to the collection setup. This page demonstrates a historical replay, not live production monitoring.">
 <link rel="canonical" href="https://demo.respitelabs.net/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%23121212%27/%3E%3Crect x=%274%27 y=%274%27 width=%278%27 height=%278%27 fill=%27%23FFC400%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%23121212%27/%3E%3Crect x=%274%27 y=%274%27 width=%278%27 height=%278%27 fill=%27%23d9f56d%27/%3E%3C/svg%3E">
 <style>
 :root{
   color-scheme: light;
   --paper:#F7F7F4; --ink:#121212; --soft:#4E4F54; --faint:#6E6F74; --rule:#DEDED8; --panel:#EFEFEA;
-  --signal:#FFC400;
+  --signal:#d9f56d;
   --sans:"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --mono:ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
 }
@@ -102,14 +102,14 @@ footer{border-top:1px solid var(--rule);padding-block:28px;font-size:15px;color:
 <header><div class="wrap nav"><a class="logo" href="https://respitelabs.net/">RESPITE</a><a class="btn" href="https://respitelabs.net/#contact">Contact</a></div></header>
 <main>
 <div class="wrap hero">
-  <h1>Catch the broken recording setup before its data ships.</h1>
+  <h1>Find the recording setup behind the bad data.</h1>
   <p class="sub">Respite runs on a robot data vendor's computer, finds the setup causing bad data, and repairs what it can.</p>
-  <p class="sub" style="font-size:clamp(17px,2vw,19px)">Robotics labs pay for recorded robot data to train their AI models. A broken recording setup ruins every hour it records, and it still looks fine on video.</p>
+  <p class="sub" style="font-size:clamp(17px,2vw,19px)">A robot recording can appear normal while a camera provides repeated frames. This replay shows how a station-level warning would have appeared on historical data.</p>
 </div>
 
 <section class="wrap" id="replay" aria-labelledby="rp-h" style="border-top:0;padding-top:24px">
-  <h2 id="rp-h" class="label" style="font-size:13px;letter-spacing:.08em;margin:0 0 6px">Live replay of a real batch</h2>
-  <p class="lead" style="margin-bottom:8px">One recording station of a robotics team's batch, checked episode by episode by <code>respite live</code>, replayed in recording order.</p>
+  <h2 id="rp-h" class="label" style="font-size:13px;letter-spacing:.08em;margin:0 0 6px">Historical replay of recorded data</h2>
+  <p class="lead" style="margin-bottom:8px">One station in a public robotics dataset, processed in historical order with <code>respite live</code>. This is a replay of finished episodes, not a deployed live customer system.</p>
   <div class="controls">
     <button class="btn" id="play" type="button">Play</button>
     <button class="btn ghost" id="restart" type="button">Restart</button>
@@ -122,15 +122,15 @@ footer{border-top:1px solid var(--rule);padding-block:28px;font-size:15px;color:
     <div id="stations"></div>
     <div class="alerts"><p>Last alerts</p><ul id="alerts"></ul></div>
   </div>
-  <p class="payoff">Respite flagged Station B 11 minutes in. Without it, Station B kept recording for 24 more hours.</p>
+  <p class="payoff">In historical replay, Respite flagged Station B after 11.3 recorded minutes. Another 24.2 hours of recordings followed. No recording hours were prevented in this retrospective test.</p>
 </section>
 
 <section class="wrap" id="why" aria-labelledby="wy-h">
   <p class="label">Why this matters</p>
   <h2 id="wy-h">Bad data is expensive, and it is found late</h2>
   <div class="cards">
-    <div class="card"><p>Robot data is sold by the hour. A broken setup ruins every hour it records.</p></div>
-    <div class="card"><p>One vendor tells buyers to expect 20 to 40% of recordings thrown out.</p><a href="https://claru.ai/blog/training-data-for-robotics-pipeline">Source: a robot data vendor's guide</a></div>
+    <div class="card"><p>Data buyers can have acceptance criteria for timing and camera quality. A faulty setup can threaten the usefulness of many recordings.</p></div>
+    <div class="card"><p>Quality standards and vendor feedback loops are operational responsibilities at major robotics model developers.</p><a href="https://jobs.ashbyhq.com/physicalintelligence/c01b0e18-5eb8-4255-a10a-7e9a171676b7">Source: Physical Intelligence data-quality role</a></div>
     <div class="card"><p>Physical Intelligence is hiring an engineer just for data quality.</p><a href="https://jobs.ashbyhq.com/physicalintelligence/c01b0e18-5eb8-4255-a10a-7e9a171676b7">Source: the job post</a></div>
   </div>
 </section>
